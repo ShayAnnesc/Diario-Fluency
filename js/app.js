@@ -637,7 +637,7 @@ notesCard.addEventListener("click", e => {
   const cmd = b.dataset.cmd;
   if (cmd === "h3" || cmd === "p") document.execCommand("formatBlock", false, cmd === "h3" ? "<h3>" : "<p>");
   else if (cmd === "quote") document.execCommand("formatBlock", false, "<blockquote>");
-  else if (cmd === "mark") { document.execCommand("styleWithCSS", false, true); document.execCommand("hiliteColor", false, "rgba(242, 183, 5, .42)"); document.execCommand("styleWithCSS", false, false); }
+  else if (cmd === "mark") { document.execCommand("styleWithCSS", false, true); document.execCommand("hiliteColor", false, getComputedStyle(document.documentElement).getPropertyValue("--mark").trim()); document.execCommand("styleWithCSS", false, false); }
   else document.execCommand(cmd, false, null);
   onEdit();
 });
