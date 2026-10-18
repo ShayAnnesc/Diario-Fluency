@@ -21,10 +21,10 @@ Sem configurar o Supabase, o app já funciona e salva tudo **só no navegador** 
 1. Crie um projeto em <https://supabase.com> (o plano gratuito basta).
 2. No painel, abra **SQL Editor → New query**, cole o conteúdo de `supabase/schema.sql` e clique em **Run**.
 3. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public**. Cole as duas em `js/config.js`.
-4. Em **Authentication → Sign In / Providers → Email**, decida se quer exigir a confirmação de e-mail:
-   - deixando ligada, o Supabase manda um link de confirmação depois de você clicar em "Criar conta";
-   - desligando, a conta já entra direto.
-5. Abra o app, clique em **Criar conta** e depois em **Entrar**.
+4. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up** (o site não tem cadastro: só entra quem você criar).
+5. Crie o seu usuário em **Authentication → Users → Add user → Create new user**:
+   - e-mail no formato `usuario@diario.fluency.com` (ex.: `dev@diario.fluency.com`), uma senha e **Auto Confirm User** marcado;
+   - no site, você entra digitando só o **usuário** (`dev`) e a senha. O domínio fica em `LOGIN_DOMAIN`, no `js/config.js`.
 
 O primeiro login envia para a sua conta o que estiver salvo no navegador, então nada do que você marcou antes se perde.
 

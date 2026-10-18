@@ -25,11 +25,6 @@ const Store = {
     if (error) throw error;
     return data.user;
   },
-  async signUp(email, password) {
-    const { data, error } = await this.sb.auth.signUp({ email, password });
-    if (error) throw error;
-    return data; // data.session vem null quando o projeto exige confirmar o e-mail
-  },
   async signOut() {
     await this.sb.auth.signOut();
     this.user = null;

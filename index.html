@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=2">
+  <link rel="stylesheet" href="css/styles.css?v=3">
   <style>html, body { height: 100%; margin: 0 } [hidden] { display: none !important }</style>
 </head>
 <body>
@@ -19,12 +19,11 @@
         <div class="eyebrow">Curso de inglês · Fluency</div>
         <h1 style="font-size:30px">Diário do Inglês</h1>
       </div>
-      <p class="muted" style="margin:0">Entre para ver seu progresso e suas anotações em qualquer aparelho.</p>
-      <label for="email">E-mail<input id="email" type="email" autocomplete="email" required></label>
-      <label for="password">Senha<input id="password" type="password" autocomplete="current-password" minlength="6" required></label>
+      <p class="muted" style="margin:0">Entre com seu usuário para ver seu progresso e suas anotações em qualquer aparelho.</p>
+      <label for="username">Usuário<input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label for="password">Senha<input id="password" type="password" autocomplete="current-password" required></label>
       <div class="btns">
         <button class="btn" type="submit" id="signInBtn">Entrar</button>
-        <button class="btn ghost" type="button" id="signUpBtn">Criar conta</button>
       </div>
       <p class="msg" id="authMsg" role="status"></p>
     </form>
@@ -135,9 +134,9 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="js/config.js?v=2"></script>
-  <script src="js/data.js?v=2"></script>
-  <script src="js/store.js?v=2"></script>
-  <script src="js/app.js?v=2"></script>
+  <script src="js/config.js?v=3"></script>
+  <script src="js/data.js?v=3"></script>
+  <script src="js/store.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>

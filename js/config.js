@@ -2,6 +2,8 @@
    Deixe vazio para usar o app só neste navegador, sem login.
    A chave "anon" é pública por natureza: quem protege os dados são as regras RLS do schema.sql. */
 window.APP_CONFIG = {
+  // Login por usuário: "dev" entra como dev@diario.fluency.com (crie as contas em Supabase > Authentication > Users)
+  LOGIN_DOMAIN: "diario.fluency.com",
   SUPABASE_URL: "https://uwzsvjfubcipxehvoolp.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3enN2amZ1YmNpcHhlaHZvb2xwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMzMxNjEsImV4cCI6MjEwNzkwOTE2MX0.IFMsKZbMkrWyHalT8-EOUvD3u33nO2bNW2y4akcWHQM"
 };

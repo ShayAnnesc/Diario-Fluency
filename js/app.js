@@ -671,17 +671,20 @@ function showAuth(msg = "") {
   authMsg(msg);
 }
 function authMsg(text, err = false) { const m = $("authMsg"); m.textContent = text; m.classList.toggle("err", err); }
-function authBusy(on) { $("signInBtn").disabled = on; $("signUpBtn").disabled = on; }
+function authBusy(on) { $("signInBtn").disabled = on; }
 const AUTH_ERR = {
-  "Invalid login credentials": "E-mail ou senha incorretos.",
-  "Email not confirmed": "Confirme seu e-mail pelo link que o Supabase enviou e tente de novo.",
-  "User already registered": "Já existe uma conta com esse e-mail. Use Entrar."
+  "Invalid login credentials": "Usuário ou senha incorretos.",
+  "Email not confirmed": "Essa conta ainda não foi confirmada. No Supabase, confirme o usuário em Authentication → Users."
 };
 const authError = e => AUTH_ERR[e?.message] || e?.message || "Algo deu errado. Tente de novo.";
+// O Supabase entra por e-mail: o usuário "dev" vira "dev@<LOGIN_DOMAIN>". Quem digitar um e-mail completo entra com ele.
+const LOGIN_DOMAIN = window.APP_CONFIG?.LOGIN_DOMAIN || "diario.fluency.com";
+const toEmail = u => u.includes("@") ? u : `${u}@${LOGIN_DOMAIN}`;
+const toUser = email => email?.endsWith("@" + LOGIN_DOMAIN) ? email.slice(0, -LOGIN_DOMAIN.length - 1) : email || "";
 function readCreds() {
-  const email = $("email").value.trim(), password = $("password").value;
-  if (!email || password.length < 6) { authMsg("Informe o e-mail e uma senha com pelo menos 6 caracteres.", true); return null; }
-  return { email, password };
+  const user = $("username").value.trim().toLowerCase(), password = $("password").value;
+  if (!user || !password) { authMsg("Informe o usuário e a senha.", true); return null; }
+  return { email: toEmail(user), password };
 }
 $("authForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -689,16 +692,6 @@ $("authForm").addEventListener("submit", async e => {
   authBusy(true); authMsg("Entrando…");
   try { await enter(await Store.signIn(c.email, c.password)); }
   catch (err) { authMsg(authError(err), true); }
-  authBusy(false);
-});
-$("signUpBtn").addEventListener("click", async () => {
-  const c = readCreds(); if (!c) return;
-  authBusy(true); authMsg("Criando conta…");
-  try {
-    const r = await Store.signUp(c.email, c.password);
-    if (r.session) await enter(r.user);
-    else authMsg("Conta criada. Abra o link de confirmação que chegou no seu e-mail e depois clique em Entrar.");
-  } catch (err) { authMsg(authError(err), true); }
   authBusy(false);
 });
 $("signOutBtn").addEventListener("click", async () => {
@@ -711,7 +704,7 @@ async function enter(user) {
   Store.user = user;
   loadCache();
   $("auth").hidden = true; $("app").hidden = false;
-  $("who").textContent = user.email || ""; $("who").hidden = false; $("signOutBtn").hidden = false;
+  $("who").textContent = toUser(user.email); $("who").hidden = false; $("signOutBtn").hidden = false;
   renderAll(); route();
   try {
     const r = await Store.load();
