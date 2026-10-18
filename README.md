@@ -51,6 +51,8 @@ Depois acesse `http://localhost:3000`.
 
 ## Publicar no GitHub Pages
 
+Ao mudar algum arquivo de `css/` ou `js/`, aumente o número `?v=` nos links do `index.html` (ex.: `?v=2` → `?v=3`). Isso faz o navegador baixar a versão nova em vez de usar a guardada em cache.
+
 É um site estático, sem passo de build:
 
 1. Suba a pasta para um repositório no GitHub.
