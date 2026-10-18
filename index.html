@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=5">
+  <link rel="stylesheet" href="css/styles.css?v=6">
   <style>html, body { height: 100%; margin: 0 } [hidden] { display: none !important }</style>
 </head>
 <body>
@@ -131,12 +131,43 @@
     </div>
   </div>
 
+  <!-- Edição da anotação: ocupa a janela, só com a anotação (bom para tela dividida com a aula) -->
+  <div class="notemodal" id="noteModal" role="dialog" aria-modal="true" aria-labelledby="nmTitle" hidden>
+    <div class="nm-panel">
+      <header class="nm-head">
+        <div>
+          <div class="eyebrow" id="nmEyebrow"></div>
+          <h2 id="nmTitle"></h2>
+        </div>
+        <button type="button" class="btn" id="nmClose" title="Fechar a edição (Esc)">Concluir</button>
+      </header>
+      <div class="tool" role="toolbar" aria-label="Formatação">
+        <button type="button" data-cmd="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
+        <button type="button" data-cmd="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
+        <button type="button" data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+        <button type="button" data-cmd="mark" title="Marca-texto">Marca-texto</button>
+        <span class="sep"></span>
+        <button type="button" data-cmd="h3" title="Título">Título</button>
+        <button type="button" data-cmd="p" title="Texto normal">Texto</button>
+        <button type="button" data-cmd="quote" title="Destaque">Destaque</button>
+        <span class="sep"></span>
+        <button type="button" data-cmd="insertUnorderedList" title="Lista">• Lista</button>
+        <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
+        <span class="sep"></span>
+        <button type="button" data-cmd="removeFormat" title="Limpar formatação">Limpar</button>
+      </div>
+      <div class="editor prose" id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="nmTitle"
+        data-ph="Escreva o que aprendeu nesta unidade: regras de gramática, frases úteis, vocabulário novo, dúvidas para revisar…"></div>
+      <footer class="nmeta"><span id="nmWords"></span><span id="nmSaved"></span></footer>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="js/config.js?v=5"></script>
-  <script src="js/data.js?v=5"></script>
-  <script src="js/store.js?v=5"></script>
-  <script src="js/app.js?v=5"></script>
+  <script src="js/config.js?v=6"></script>
+  <script src="js/data.js?v=6"></script>
+  <script src="js/store.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
 </body>
 </html>

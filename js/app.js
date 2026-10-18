@@ -62,7 +62,7 @@ const noteTimers = {};
 function saveNote(key) {
   cache();
   clearTimeout(noteTimers[key]);
-  noteTimers[key] = setTimeout(() => { const n = notes[key]; remote(() => Store.setNote(key, n.html, n.updatedAt)); }, 900);
+  noteTimers[key] = setTimeout(() => { delete noteTimers[key]; const n = notes[key]; remote(() => Store.setNote(key, n.html, n.updatedAt)); }, 900);
 }
 
 /* ---------- cálculos de estudo ---------- */
@@ -591,47 +591,65 @@ detail.addEventListener("click", e => {
   }
 });
 
-/* ---------- anotações (coluna da direita) ---------- */
+/* ---------- anotações: leitura no card, edição num modal que ocupa a janela ---------- */
+const wordsIn = html => {
+  const d = document.createElement("div");
+  d.innerHTML = (html || "").replace(/<\/(p|h3|li|blockquote|div)>|<br\s*\/?>/gi, " ");
+  return (d.textContent.trim().match(/\S+/g) || []).length;
+};
+const editedAt = up => { const d = new Date(up); return `Editado em ${fmtDate(d)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
 function renderNotes() {
-  const m = mod(), s = sel(), key = noteKey(m, s);
+  const m = mod(), s = sel(), note = notes[noteKey(m, s)], html = note?.html || "";
   $("notesCard").innerHTML = `
     <div class="nhead">
       <div class="eyebrow">Unidade ${s} · ${m.units[s - 1].t}</div>
-      <h2>Minhas anotações</h2>
+      <div class="nhead-row"><h2>Minhas anotações</h2>
+        <button type="button" class="btn sm" id="noteEditBtn">${html ? "Editar" : "Escrever"}</button></div>
     </div>
-    <div>
-      <div class="tool" role="toolbar" aria-label="Formatação">
-        <button type="button" data-cmd="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
-        <button type="button" data-cmd="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
-        <button type="button" data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
-        <button type="button" data-cmd="mark" title="Marca-texto">Marca-texto</button>
-        <span class="sep"></span>
-        <button type="button" data-cmd="h3" title="Título">Título</button>
-        <button type="button" data-cmd="p" title="Texto normal">Texto</button>
-        <button type="button" data-cmd="quote" title="Destaque">Destaque</button>
-        <span class="sep"></span>
-        <button type="button" data-cmd="insertUnorderedList" title="Lista">• Lista</button>
-        <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
-        <span class="sep"></span>
-        <button type="button" data-cmd="removeFormat" title="Limpar formatação">Limpar</button>
-      </div>
-      <div class="editor" id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Anotações da unidade ${s}"
-        data-ph="Escreva o que aprendeu nesta unidade: regras de gramática, frases úteis, vocabulário novo, dúvidas para revisar…"></div>
-    </div>
-    <div class="nmeta"><span id="nwords"></span><span id="nupd">Salva sozinho enquanto você escreve</span></div>`;
-  $("editor").innerHTML = notes[key]?.html || "";
-  updNoteMeta();
-}
-function updNoteMeta() {
-  const ed = $("editor"); if (!ed) return;
-  const n = (ed.innerText.trim().match(/\S+/g) || []).length;
-  $("nwords").textContent = plural(n, "palavra", "palavras");
-  const up = notes[noteKey(mod(), sel())]?.updatedAt, d = up && new Date(up);
-  $("nupd").textContent = d ? `Editado em ${fmtDate(d)}, ${pad(d.getHours())}:${pad(d.getMinutes())}` : "Salva sozinho enquanto você escreve";
+    ${html
+      ? `<div class="noteview prose" title="Clique duas vezes para editar">${html}</div>`
+      : `<button type="button" class="noteempty" id="noteEmpty">Nenhuma anotação nesta unidade ainda.<span>Clique para começar a escrever</span></button>`}
+    ${html ? `<div class="nmeta"><span>${plural(wordsIn(html), "palavra", "palavras")}</span><span>${note.updatedAt ? editedAt(note.updatedAt) : ""}</span></div>` : ""}`;
 }
 const notesCard = $("notesCard");
-notesCard.addEventListener("mousedown", e => { if (e.target.closest(".tool button")) e.preventDefault(); });
-notesCard.addEventListener("click", e => {
+notesCard.addEventListener("click", e => { if (e.target.closest("#noteEditBtn, #noteEmpty")) openNoteEditor(); });
+notesCard.addEventListener("dblclick", e => { if (e.target.closest(".noteview")) openNoteEditor(); });
+
+let editKey = null;   // anotação aberta no modal
+function openNoteEditor() {
+  const m = mod(), s = sel();
+  editKey = noteKey(m, s);
+  $("nmEyebrow").textContent = `${m.name} · Unidade ${s} de ${m.units.length}`;
+  $("nmTitle").textContent = m.units[s - 1].t;
+  $("editor").innerHTML = notes[editKey]?.html || "";
+  $("noteModal").hidden = false;
+  document.body.classList.add("modal-open");
+  updEditorMeta();
+  // cursor no fim do texto, pronto para continuar escrevendo
+  const ed = $("editor"), range = document.createRange(), selection = getSelection();
+  ed.focus(); range.selectNodeContents(ed); range.collapse(false);
+  selection.removeAllRanges(); selection.addRange(range);
+}
+function closeNoteEditor() {
+  if (!editKey) return;
+  const key = editKey; editKey = null;
+  // salva na hora o que ainda estava esperando a pausa na digitação
+  if (noteTimers[key]) { clearTimeout(noteTimers[key]); delete noteTimers[key]; const n = notes[key]; remote(() => Store.setNote(key, n.html, n.updatedAt)); }
+  $("noteModal").hidden = true;
+  document.body.classList.remove("modal-open");
+  renderNotes();
+  $("noteEditBtn")?.focus();
+}
+function updEditorMeta() {
+  const up = editKey && notes[editKey]?.updatedAt;
+  $("nmWords").textContent = plural(wordsIn($("editor").innerHTML), "palavra", "palavras");
+  $("nmSaved").textContent = up ? `${editedAt(up)} · salvo automaticamente` : "Salvo automaticamente enquanto você escreve";
+}
+const noteModal = $("noteModal");
+noteModal.addEventListener("mousedown", e => { if (e.target.closest(".tool button")) e.preventDefault(); });
+noteModal.addEventListener("click", e => {
+  if (e.target.closest("#nmClose")) return closeNoteEditor();
   const b = e.target.closest(".tool button"); if (!b) return;
   $("editor").focus();
   const cmd = b.dataset.cmd;
@@ -641,22 +659,24 @@ notesCard.addEventListener("click", e => {
   else document.execCommand(cmd, false, null);
   onEdit();
 });
-notesCard.addEventListener("input", e => { if (e.target.id === "editor") onEdit(); });
-notesCard.addEventListener("paste", e => {
+noteModal.addEventListener("input", e => { if (e.target.id === "editor") onEdit(); });
+noteModal.addEventListener("paste", e => {
   if (!e.target.closest || !e.target.closest("#editor")) return;
   e.preventDefault();
   document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain"));
 });
+noteModal.addEventListener("keydown", e => { if (e.key === "Escape") { e.preventDefault(); closeNoteEditor(); } });
 function onEdit() {
-  const ed = $("editor"), key = noteKey(mod(), sel());
-  notes[key] = { html: ed.innerText.trim() ? ed.innerHTML : "", updatedAt: Date.now() };
-  updNoteMeta(); saveNote(key);
+  if (!editKey) return;
+  const ed = $("editor");
+  notes[editKey] = { html: ed.innerText.trim() ? ed.innerHTML : "", updatedAt: Date.now() };
+  updEditorMeta(); saveNote(editKey);
 }
 
 /* ---------- geral ---------- */
 let toastT;
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 3200); }
-// withNotes = false mantém o editor como está (não perde o que está sendo digitado).
+// withNotes = false atualiza o progresso sem redesenhar o card de anotações.
 function renderAll(withNotes = true) {
   renderTrail(); renderPace(); renderCalendar(); renderMetrics();
   if (withNotes) return renderContent();
