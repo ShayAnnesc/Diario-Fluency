@@ -1,0 +1,10 @@
+# Material do curso e versão antiga de página única (ficam só no computador)
+Basic.pdf
+fluency-tracker.html
+
+# Configuração local do editor/assistente
+.claude/
+
+node_modules/
+.DS_Store
+Thumbs.db
