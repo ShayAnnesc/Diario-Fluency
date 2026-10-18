@@ -1,9 +1,14 @@
 /* Layout: a study notebook — tabs for study and metrics; course trail, pace + week/month calendar, then units beside the open unit (lessons + notes). */
 :root {
-  /* Tema do UI kit: Urbanist; rosa #CC498F, rosa claro #F4D4E6 e grafite #202020 */
+  /* Tema do UI kit: Urbanist; rosa #CC498F e #F4D4E6 nos detalhes, grafite #202020 no texto */
   --bg: #F8F5F7; --surface: #FFFFFF; --sunken: #F4EFF2; --ink: #202020; --muted: #776B72; --line: #EEDFE7;
   --accent: #CC498F; --accent-ink: #FFFFFF; --accent-soft: #F4D4E6;
-  --sun: #CC498F; --sun-ink: #FFFFFF; --sun-soft: #F4D4E6; --miss: #C9453B; --miss-soft: #F9E1DC; --ok: #CC498F; --lock: #A99CA3;
+  --lock: #A99CA3;
+  /* cores de status: rosa fica só nos detalhes */
+  --ok: #1E8A55; --ok-ink: #FFFFFF;                          /* concluído */
+  --prog: #2B50D8; --prog-ink: #FFFFFF; --prog-soft: #E2E7FB; /* em andamento / progresso */
+  --sun: #E2A200; --sun-ink: #2A2000; --sun-soft: #FBEFC8;   /* dia estudado */
+  --miss: #C9432D; --miss-soft: #F5DDD7;                     /* não estudou */
   --mark: rgba(204, 73, 143, .28);
   --f-display: "Urbanist", "Segoe UI", system-ui, sans-serif;
   --f-body: "Urbanist", "Segoe UI", system-ui, sans-serif;
@@ -13,13 +18,17 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #151113; --surface: #1F1A1D; --sunken: #19151A; --ink: #F5EEF2; --muted: #A9989F; --line: #3A2E35;
   --accent: #E26AAB; --accent-ink: #202020; --accent-soft: #4A2338;
-  --sun: #E26AAB; --sun-ink: #202020; --sun-soft: #3E1F31; --miss: #F07B67; --miss-soft: #3B201C; --ok: #E26AAB; --lock: #6E6168;
+  --lock: #6E6168;
+  --ok: #4CC287; --ok-ink: #0F131A; --prog: #7E98FF; --prog-ink: #0F131A; --prog-soft: #212947;
+  --sun: #F2B705; --sun-ink: #2A2000; --sun-soft: #3A3112; --miss: #F07B67; --miss-soft: #3B201C;
   --mark: rgba(226, 106, 171, .32);
   color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #151113; --surface: #1F1A1D; --sunken: #19151A; --ink: #F5EEF2; --muted: #A9989F; --line: #3A2E35;
   --accent: #E26AAB; --accent-ink: #202020; --accent-soft: #4A2338;
-  --sun: #E26AAB; --sun-ink: #202020; --sun-soft: #3E1F31; --miss: #F07B67; --miss-soft: #3B201C; --ok: #E26AAB; --lock: #6E6168;
+  --lock: #6E6168;
+  --ok: #4CC287; --ok-ink: #0F131A; --prog: #7E98FF; --prog-ink: #0F131A; --prog-soft: #212947;
+  --sun: #F2B705; --sun-ink: #2A2000; --sun-soft: #3A3112; --miss: #F07B67; --miss-soft: #3B201C;
   --mark: rgba(226, 106, 171, .32);
   color-scheme: dark }
 
@@ -50,19 +59,19 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .wd:
 /* course trail */
 .trail { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 12px }
 .mod { position: relative; border-radius: var(--r); padding: 18px; border: 1px solid var(--line); background: var(--surface); display: grid; gap: 10px; align-content: start; min-width: 0 }
-.mod.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset }
+.mod.active { border-color: var(--prog); box-shadow: 0 0 0 1px var(--prog) inset }
 .mod.locked { background: var(--sunken); color: var(--muted) }
 .mod .row { display: flex; justify-content: space-between; align-items: center; gap: 10px }
 .mod h3 { font-size: 22px; font-weight: 600 }
 .mod.locked h3 { color: var(--muted) }
 .mod p { margin: 0; font-size: 13.5px }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap }
-.chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
-.chip.done { background: var(--ok); color: var(--accent-ink); border-color: var(--ok) }
+.chip.on { background: var(--prog); color: var(--prog-ink); border-color: var(--prog) }
+.chip.done { background: var(--ok); color: var(--ok-ink); border-color: var(--ok) }
 .tags { display: flex; flex-wrap: wrap; gap: 6px }
 .bar { height: 8px; border-radius: 99px; background: var(--sunken); overflow: hidden }
-.mod.active .bar, .unit .bar, .detail .bar { background: var(--accent-soft) }
-.bar > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .4s ease }
+.mod.active .bar, .unit .bar, .detail .bar { background: var(--prog-soft) }
+.bar > span { display: block; height: 100%; background: var(--prog); border-radius: inherit; transition: width .4s ease }
 .lockline { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600 }
 .lockline svg { flex: none }
 
@@ -72,8 +81,8 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .wd:
 .big { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center }
 .ring { width: 104px; height: 104px }
 .ring circle { fill: none; stroke-width: 10 }
-.ring .trk { stroke: var(--accent-soft) }
-.ring .val { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .5s ease }
+.ring .trk { stroke: var(--prog-soft) }
+.ring .val { stroke: var(--prog); stroke-linecap: round; transition: stroke-dashoffset .5s ease }
 .ring text { fill: var(--ink); font-family: var(--f-data); font-weight: 600; font-size: 20px }
 .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px }
 .stat b { display: block; font-family: var(--f-data); font-size: 18px; font-weight: 600 }
@@ -159,7 +168,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .wd:
 .tl { display: grid; gap: 8px; border-top: 1px dashed var(--line); padding-top: 14px }
 .tlrow { display: grid; grid-template-columns: 12px 110px 1fr; gap: 10px; align-items: center; font-size: 13.5px }
 .tldot { width: 10px; height: 10px; border-radius: 50%; background: var(--line) }
-.tlrow.cur .tldot { background: var(--accent) }
+.tlrow.cur .tldot { background: var(--prog) }
 .settings { display: flex; flex-wrap: wrap; gap: 16px 28px; margin-top: 16px }
 .settings label { display: grid; gap: 6px; font-size: 13px; font-weight: 600 }
 .settings input { font: inherit; font-family: var(--f-data); padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 180px }
@@ -187,7 +196,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .wd:
 #mForecast .tl { margin-top: 14px }
 #mLocked { display: grid; gap: 16px; margin-top: 14px }
 .cprog { display: flex; align-items: center; gap: 14px; font-size: 13px; white-space: nowrap }
-.cprog .bar { flex: 1; min-width: 80px; background: var(--accent-soft) }
+.cprog .bar { flex: 1; min-width: 80px; background: var(--prog-soft) }
 .seg button svg { vertical-align: -2px; margin-right: 4px }
 .units { display: grid; grid-template-columns: 280px minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start }
 .modopen { justify-self: start; margin-top: 4px; padding: 7px 16px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 13.5px; text-decoration: none }
@@ -202,7 +211,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .wd:
 .unit:hover { background: var(--sunken) }
 .unit[aria-current="true"] { background: var(--accent-soft); border-color: var(--accent) }
 .unit .n { grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-data); font-weight: 600; background: var(--sunken); font-size: 14px }
-.unit.full .n { background: var(--ok); color: var(--accent-ink) }
+.unit.full .n { background: var(--ok); color: var(--ok-ink) }
 .unit .t { font-weight: 600; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .unit .c { font-family: var(--f-data); font-size: 12px; color: var(--muted) }
 .unit .bar { grid-column: 2 / 4; height: 5px }
@@ -214,7 +223,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .wd:
 .lesson { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 4px 12px; padding: 14px 4px; border-bottom: 1px solid var(--line); align-items: start }
 .check { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); display: grid; place-items: center; padding: 0; margin-top: 1px }
 .check svg { opacity: 0 }
-.lesson.done .check { background: var(--ok); border-color: var(--ok); color: var(--accent-ink) }
+.lesson.done .check { background: var(--ok); border-color: var(--ok); color: var(--ok-ink) }
 .lesson.done .check svg { opacity: 1 }
 .lesson .lt { font-weight: 600; font-size: 15px }
 .lesson.done .lt { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line) }
@@ -234,7 +243,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .wd:
 .editor h3 { font-size: 18px; margin: 14px 0 4px }
 .editor p { margin: 0 0 8px }
 .editor ul, .editor ol { margin: 4px 0 8px; padding-left: 22px }
-.editor blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--sun); background: var(--sun-soft); border-radius: 0 8px 8px 0 }
+.editor blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0 }
 .editor code { font-family: var(--f-data); font-size: 13px; background: var(--sunken); padding: 1px 5px; border-radius: 4px }
 .nmeta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--muted) }
 
