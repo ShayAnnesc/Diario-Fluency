@@ -685,6 +685,23 @@ function renderAll(withNotes = true) {
   if (isUnlocked(curMod) && m.units.length) { renderUnits(); renderDetail(); }
 }
 
+/* ---------- tema claro/escuro (escolha salva no navegador; sem escolha, segue o sistema) ---------- */
+const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+const isDark = () => (document.documentElement.dataset.theme || (darkQuery.matches ? "dark" : "light")) === "dark";
+function paintThemeBtn() {
+  const dark = isDark();
+  $("themeBtn").setAttribute("aria-checked", String(dark));
+  $("themeBtn").title = dark ? "Mudar para o modo claro" : "Mudar para o modo escuro";
+}
+$("themeBtn").addEventListener("click", () => {
+  const theme = isDark() ? "light" : "dark";
+  document.documentElement.dataset.theme = theme;
+  lsSet(LS + ":theme", theme);
+  paintThemeBtn();
+});
+darkQuery.addEventListener("change", paintThemeBtn);
+paintThemeBtn();
+
 /* ---------- login ---------- */
 function showAuth(msg = "") {
   $("app").hidden = true; $("auth").hidden = false;

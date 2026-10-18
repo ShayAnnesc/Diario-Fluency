@@ -299,6 +299,15 @@ body.modal-open { overflow: hidden }
 .settings input:focus, .settings select:focus, .auth input:focus { outline: none; border-color: var(--accent); background: var(--accent-soft) }
 .days button { border-radius: 999px }
 
+/* alternância claro/escuro */
+.top-right { display: grid; justify-items: end; gap: 10px }
+.theme-switch { position: relative; display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; border: 1px solid var(--line); background: var(--sunken) }
+.theme-switch .ti { position: relative; z-index: 1; width: 28px; height: 28px; display: grid; place-items: center; color: var(--muted); transition: color .2s }
+.theme-switch .knob { position: absolute; top: 2px; left: 2px; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .2s ease }
+.theme-switch[aria-checked="true"] .knob { transform: translateX(30px) }
+.theme-switch[aria-checked="false"] .sun, .theme-switch[aria-checked="true"] .moon { color: var(--accent) }
+.theme-switch:hover { border-color: var(--accent) }
+
 /* login e conta */
 .auth { min-height: 100%; display: grid; place-items: center; padding-block: 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
