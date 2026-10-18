@@ -592,14 +592,21 @@ detail.addEventListener("click", e => {
 });
 
 /* ---------- anotações: leitura no card, edição num modal que ocupa a janela ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const wordsIn = html => {
   const d = document.createElement("div");
-  d.innerHTML = (html || "").replace(/<\/(p|h3|li|blockquote|div)>|<br\s*\/?>/gi, " ");
+  d.innerHTML = (html || "").replace(/<\/(p|h1|h2|h3|li|blockquote|div)>|<br\s*\/?>/gi, " ");
   return (d.textContent.trim().match(/\S+/g) || []).length;
 };
 const editedAt = up => { const d = new Date(up); return `Editado em ${fmtDate(d)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
+// Guia: lista os Títulos 1, 2 e 3 da anotação; clicar leva até o título.
+const headingsIn = el => [...el.querySelectorAll("h1, h2, h3")];
+const guideItems = el => headingsIn(el).map((h, i) =>
+  `<li class="lv${h.tagName[1]}"><button type="button" data-h="${i}">${esc(h.textContent.trim() || "(título vazio)")}</button></li>`).join("");
+
 function renderNotes() {
+  closePin();
   const m = mod(), s = sel(), note = notes[noteKey(m, s)], html = note?.html || "";
   $("notesCard").innerHTML = `
     <div class="nhead">
@@ -608,31 +615,52 @@ function renderNotes() {
         <button type="button" class="btn sm" id="noteEditBtn">${html ? "Editar" : "Escrever"}</button></div>
     </div>
     ${html
-      ? `<div class="noteview prose" title="Clique duas vezes para editar">${html}</div>`
+      ? `<details class="vguide" id="vGuide" hidden><summary>Guia</summary><ol></ol></details>
+         <div class="noteview prose" id="noteView" title="Clique duas vezes para editar">${html}</div>`
       : `<button type="button" class="noteempty" id="noteEmpty">Nenhuma anotação nesta unidade ainda.<span>Clique para começar a escrever</span></button>`}
     ${html ? `<div class="nmeta"><span>${plural(wordsIn(html), "palavra", "palavras")}</span><span>${note.updatedAt ? editedAt(note.updatedAt) : ""}</span></div>` : ""}`;
+  if (html) {
+    const items = guideItems($("noteView"));
+    $("vGuide").hidden = !items;
+    $("vGuide").querySelector("ol").innerHTML = items;
+    $("vGuide").querySelector("summary").textContent = `Guia (${headingsIn($("noteView")).length})`;
+  }
 }
 const notesCard = $("notesCard");
-notesCard.addEventListener("click", e => { if (e.target.closest("#noteEditBtn, #noteEmpty")) openNoteEditor(); });
-notesCard.addEventListener("dblclick", e => { if (e.target.closest(".noteview")) openNoteEditor(); });
+notesCard.addEventListener("click", e => {
+  if (e.target.closest("#noteEditBtn, #noteEmpty")) return openNoteEditor();
+  const h = e.target.closest(".vguide [data-h]");
+  if (h) return headingsIn($("noteView"))[Number(h.dataset.h)]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const pin = e.target.closest(".pin");
+  if (pin) openPin(pin, false);
+});
+notesCard.addEventListener("dblclick", e => { if (e.target.closest(".noteview") && !e.target.closest(".pin")) openNoteEditor(); });
 
-let editKey = null;   // anotação aberta no modal
+/* ----- editor ----- */
+let editKey = null;      // anotação aberta no modal
+let lastRange = null;    // seleção guardada (os menus da barra tiram o foco do texto)
+const editor = $("editor");
+
 function openNoteEditor() {
   const m = mod(), s = sel();
+  closePin();
   editKey = noteKey(m, s);
   $("nmEyebrow").textContent = `${m.name} · Unidade ${s} de ${m.units.length}`;
   $("nmTitle").textContent = m.units[s - 1].t;
-  $("editor").innerHTML = notes[editKey]?.html || "";
+  editor.innerHTML = notes[editKey]?.html || "";
   $("noteModal").hidden = false;
   document.body.classList.add("modal-open");
-  updEditorMeta();
+  setGuideOpen(lsGet(LS + ":guide", innerWidth > 1100));
+  updEditorMeta(); updGuide();
   // cursor no fim do texto, pronto para continuar escrevendo
-  const ed = $("editor"), range = document.createRange(), selection = getSelection();
-  ed.focus(); range.selectNodeContents(ed); range.collapse(false);
-  selection.removeAllRanges(); selection.addRange(range);
+  const range = document.createRange();
+  editor.focus(); range.selectNodeContents(editor); range.collapse(false);
+  getSelection().removeAllRanges(); getSelection().addRange(range);
+  updToolbar();
 }
 function closeNoteEditor() {
   if (!editKey) return;
+  closePin(); closePalettes();
   const key = editKey; editKey = null;
   // salva na hora o que ainda estava esperando a pausa na digitação
   if (noteTimers[key]) { clearTimeout(noteTimers[key]); delete noteTimers[key]; const n = notes[key]; remote(() => Store.setNote(key, n.html, n.updatedAt)); }
@@ -643,35 +671,211 @@ function closeNoteEditor() {
 }
 function updEditorMeta() {
   const up = editKey && notes[editKey]?.updatedAt;
-  $("nmWords").textContent = plural(wordsIn($("editor").innerHTML), "palavra", "palavras");
+  $("nmWords").textContent = plural(wordsIn(editor.innerHTML), "palavra", "palavras");
   $("nmSaved").textContent = up ? `${editedAt(up)} · salvo automaticamente` : "Salvo automaticamente enquanto você escreve";
 }
+function onEdit() {
+  if (!editKey) return;
+  notes[editKey] = { html: editor.innerText.trim() ? editor.innerHTML : "", updatedAt: Date.now() };
+  updEditorMeta(); saveNote(editKey); scheduleGuide();
+}
+
+// guia lateral
+let guideTimer;
+const scheduleGuide = () => { clearTimeout(guideTimer); guideTimer = setTimeout(updGuide, 250); };
+function updGuide() {
+  $("nmGuideList").innerHTML = guideItems(editor) || `<li class="empty">Use Título 1, 2 ou 3 para montar o guia.</li>`;
+}
+function setGuideOpen(open) {
+  $("nmBody").classList.toggle("noguide", !open);
+  $("tbGuide").setAttribute("aria-pressed", String(open));
+}
+$("nmGuideList").addEventListener("click", e => {
+  const b = e.target.closest("[data-h]"); if (!b) return;
+  headingsIn(editor)[Number(b.dataset.h)]?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+// seleção: guarda o trecho e atualiza estilo, fonte e tamanho mostrados na barra
+document.addEventListener("selectionchange", () => {
+  if (!editKey) return;
+  const s = getSelection();
+  if (s.rangeCount && editor.contains(s.anchorNode)) { lastRange = s.getRangeAt(0).cloneRange(); updToolbar(); }
+});
+function restoreSel() {
+  const s = getSelection();
+  if (s.rangeCount && editor.contains(s.anchorNode)) return editor.focus();   // a seleção ainda está no texto
+  editor.focus();
+  if (lastRange && editor.contains(lastRange.startContainer)) { s.removeAllRanges(); s.addRange(lastRange); }
+}
+function updToolbar() {
+  const s = getSelection(); if (!s.rangeCount || !editor.contains(s.anchorNode)) return;
+  const node = s.anchorNode.nodeType === 3 ? s.anchorNode.parentElement : s.anchorNode;
+  const block = node.closest("h1, h2, h3");
+  $("tbBlock").value = block && editor.contains(block) ? block.tagName.toLowerCase() : "p";
+  const cs = getComputedStyle(node);
+  const fam = cs.fontFamily.split(",")[0].replace(/["']/g, "").trim();
+  $("tbFont").value = [...$("tbFont").options].some(o => o.value === fam) ? fam : "Urbanist";
+  if (document.activeElement !== $("tbSize")) $("tbSize").value = Math.round(parseFloat(cs.fontSize));
+}
+
+// comandos de formatação (com CSS, para cores, fontes e tamanhos ficarem no próprio texto)
+function exec(cmd, val = null) {
+  restoreSel();
+  document.execCommand("styleWithCSS", false, true);
+  document.execCommand(cmd, false, val);
+  document.execCommand("styleWithCSS", false, false);
+}
+const SENTINEL = "rgb(1, 2, 3)";   // marca temporária para "cor padrão": aplica e depois remove a propriedade
+function stripStyle(prop, test) {
+  editor.querySelectorAll("[style]").forEach(el => {
+    if (!test(el.style[prop])) return;
+    el.style.removeProperty(prop.replace(/[A-Z]/g, c => "-" + c.toLowerCase()));
+    if (el.tagName === "SPAN" && !el.getAttribute("style")?.trim() && !el.className) el.replaceWith(...el.childNodes);
+  });
+}
+function applySize(px) {
+  px = Math.min(72, Math.max(8, Math.round(px) || 16));
+  $("tbSize").value = px;
+  exec("fontSize", "7");
+  editor.querySelectorAll("font[size='7']").forEach(f => { const sp = document.createElement("span"); sp.style.fontSize = px + "px"; sp.append(...f.childNodes); f.replaceWith(sp); });
+  editor.querySelectorAll("[style]").forEach(el => { if (/xxx-large/.test(el.style.fontSize)) el.style.fontSize = px + "px"; });
+  onEdit(); updToolbar();
+}
+
+const FORE = [["Padrão", "default"], ["Rosa", "#CC498F"], ["Vermelho", "#D64545"], ["Laranja", "#E07B39"], ["Amarelo", "#C99A06"], ["Verde", "#2E9E5B"], ["Azul", "#3A6FD8"], ["Roxo", "#8A5CD6"], ["Cinza", "#8A8A8A"]];
+const HILITE = [["Sem marca-texto", "none"], ["Amarelo", "rgba(242, 183, 5, .38)"], ["Rosa", "rgba(204, 73, 143, .30)"], ["Verde", "rgba(46, 158, 91, .30)"], ["Azul", "rgba(58, 111, 216, .30)"], ["Roxo", "rgba(138, 92, 214, .30)"], ["Laranja", "rgba(224, 123, 57, .32)"]];
+const swatches = (list, kind) => list.map(([name, c]) =>
+  `<button type="button" class="sw${c === "default" || c === "none" ? " none" : ""}" role="menuitem" data-${kind}="${c}" title="${name}" aria-label="${name}"${c === "default" || c === "none" ? "" : ` style="background:${c}"`}></button>`).join("");
+$("palFore").innerHTML = swatches(FORE, "fore");
+$("palHilite").innerHTML = swatches(HILITE, "hilite");
+const closePalettes = () => document.querySelectorAll(".palette").forEach(p => { p.hidden = true; });
+
 const noteModal = $("noteModal");
 noteModal.addEventListener("mousedown", e => { if (e.target.closest(".tool button")) e.preventDefault(); });
 noteModal.addEventListener("click", e => {
   if (e.target.closest("#nmClose")) return closeNoteEditor();
-  const b = e.target.closest(".tool button"); if (!b) return;
-  $("editor").focus();
+  if (e.target.closest("#tbGuide")) { const open = $("nmBody").classList.contains("noguide"); setGuideOpen(open); lsSet(LS + ":guide", open); return; }
+  const palBtn = e.target.closest("[data-pal]");
+  if (palBtn) { const p = $(palBtn.dataset.pal), wasHidden = p.hidden; closePalettes(); p.hidden = !wasHidden; return; }
+  const fore = e.target.closest("[data-fore]");
+  if (fore) {
+    const c = fore.dataset.fore; closePalettes();
+    exec("foreColor", c === "default" ? SENTINEL : c);
+    if (c === "default") stripStyle("color", v => v === SENTINEL);
+    $("foreBar").style.background = c === "default" ? "" : c;
+    return onEdit();
+  }
+  const hil = e.target.closest("[data-hilite]");
+  if (hil) {
+    const c = hil.dataset.hilite; closePalettes();
+    exec("hiliteColor", c === "none" ? SENTINEL : c);
+    if (c === "none") stripStyle("backgroundColor", v => v === SENTINEL);
+    $("hiliteBar").style.background = c === "none" ? "" : c;
+    return onEdit();
+  }
+  const sz = e.target.closest("[data-size]");
+  if (sz) return applySize(Number($("tbSize").value) + Number(sz.dataset.size));
+  const b = e.target.closest(".tool [data-cmd]"); if (!b) return;
   const cmd = b.dataset.cmd;
-  if (cmd === "h3" || cmd === "p") document.execCommand("formatBlock", false, cmd === "h3" ? "<h3>" : "<p>");
-  else if (cmd === "quote") document.execCommand("formatBlock", false, "<blockquote>");
-  else if (cmd === "mark") { document.execCommand("styleWithCSS", false, true); document.execCommand("hiliteColor", false, getComputedStyle(document.documentElement).getPropertyValue("--mark").trim()); document.execCommand("styleWithCSS", false, false); }
-  else document.execCommand(cmd, false, null);
-  onEdit();
+  if (cmd === "pin") return addPin();
+  if (cmd === "quote") exec("formatBlock", "<blockquote>");
+  else exec(cmd);
+  onEdit(); updToolbar();
 });
-noteModal.addEventListener("input", e => { if (e.target.id === "editor") onEdit(); });
-noteModal.addEventListener("paste", e => {
-  if (!e.target.closest || !e.target.closest("#editor")) return;
+$("tbBlock").addEventListener("change", e => { exec("formatBlock", `<${e.target.value}>`); onEdit(); updToolbar(); });
+$("tbFont").addEventListener("change", e => { exec("fontName", e.target.value); onEdit(); updToolbar(); });
+$("tbSize").addEventListener("change", e => applySize(Number(e.target.value)));
+$("tbSize").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); applySize(Number(e.target.value)); } });
+editor.addEventListener("input", onEdit);
+editor.addEventListener("paste", e => {
   e.preventDefault();
   document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain"));
 });
-noteModal.addEventListener("keydown", e => { if (e.key === "Escape") { e.preventDefault(); closeNoteEditor(); } });
-function onEdit() {
-  if (!editKey) return;
-  const ed = $("editor");
-  notes[editKey] = { html: ed.innerText.trim() ? ed.innerHTML : "", updatedAt: Date.now() };
-  updEditorMeta(); saveNote(editKey);
+editor.addEventListener("click", e => { const pin = e.target.closest(".pin"); if (pin) openPin(pin, true); });
+editor.addEventListener("scroll", () => pinEl && placePin());
+noteModal.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  e.preventDefault();
+  if (pinEl) return closePin();
+  if ([...document.querySelectorAll(".palette")].some(p => !p.hidden)) return closePalettes();
+  closeNoteEditor();
+});
+document.addEventListener("mousedown", e => {
+  if (!e.target.closest(".pal-wrap")) closePalettes();
+  if (pinEl && !e.target.closest("#pinPop, .pin")) closePin();
+});
+
+/* ----- post-its: presos a um trecho; aparecem só quando o trecho é clicado ----- */
+const PIN_COLORS = { yellow: ["Amarelo", "#FFE58A"], pink: ["Rosa", "#F7C1DD"], green: ["Verde", "#BFEBCB"], blue: ["Azul", "#C4D9FA"], purple: ["Roxo", "#DCCAF5"] };
+$("ppColors").innerHTML = Object.entries(PIN_COLORS).map(([k, [name, c]]) =>
+  `<button type="button" data-pc="${k}" style="background:${c}" title="${name}" aria-label="Post-it ${name.toLowerCase()}"></button>`).join("");
+let pinEl = null, pinEditable = false;
+
+function addPin() {
+  restoreSel();
+  const s = getSelection();
+  if (!s.rangeCount || s.isCollapsed) return toast("Selecione o trecho do texto onde quer prender o post-it.");
+  const r = s.getRangeAt(0);
+  const blockOf = n => (n.nodeType === 3 ? n.parentElement : n).closest("p, h1, h2, h3, li, blockquote, .editor");
+  if (blockOf(r.startContainer) !== blockOf(r.endContainer)) return toast("Selecione um trecho dentro de um mesmo parágrafo.");
+  const inPin = n => (n.nodeType === 3 ? n.parentElement : n).closest(".pin");
+  if (inPin(r.startContainer) || inPin(r.endContainer) || r.cloneContents().querySelector?.(".pin")) return toast("Esse trecho já tem um post-it.");
+  const span = document.createElement("span");
+  span.className = "pin";
+  span.dataset.color = "yellow";
+  span.dataset.note = "";
+  span.appendChild(r.extractContents());
+  r.insertNode(span);
+  s.removeAllRanges();
+  onEdit();
+  openPin(span, true);
 }
+function openPin(span, editable) {
+  pinEl = span; pinEditable = editable;
+  const pop = $("pinPop"), color = PIN_COLORS[span.dataset.color] ? span.dataset.color : "yellow";
+  pop.style.setProperty("--pp-bg", PIN_COLORS[color][1]);
+  $("ppText").hidden = !editable; $("ppRead").hidden = editable;
+  $("ppDel").hidden = !editable; $("ppColors").hidden = !editable;
+  $("ppColors").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pc === color)));
+  if (editable) $("ppText").value = span.dataset.note || "";
+  else $("ppRead").textContent = span.dataset.note || "Post-it vazio.";
+  pop.hidden = false;
+  placePin();
+  if (editable) $("ppText").focus();
+}
+function placePin() {
+  if (!pinEl) return;
+  const pop = $("pinPop"), r = pinEl.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight, gap = 10;
+  let left = r.right + gap, top = r.top;
+  if (left + w > innerWidth - 12) left = Math.max(12, Math.min(r.left, innerWidth - w - 12));
+  if (left !== r.right + gap) top = r.bottom + gap;            // sem espaço à direita: abre embaixo
+  if (top + h > innerHeight - 12) top = Math.max(12, r.top - h - gap);
+  pop.style.left = left + "px"; pop.style.top = top + "px";
+}
+function closePin() {
+  if (!pinEl) return;
+  const span = pinEl;
+  pinEl = null; $("pinPop").hidden = true;
+  if (pinEditable && editKey && editor.contains(span)) editor.focus();
+}
+$("ppText").addEventListener("input", e => { if (!pinEl) return; pinEl.dataset.note = e.target.value; onEdit(); });
+$("ppColors").addEventListener("click", e => {
+  const b = e.target.closest("[data-pc]"); if (!b || !pinEl) return;
+  pinEl.dataset.color = b.dataset.pc;
+  $("pinPop").style.setProperty("--pp-bg", PIN_COLORS[b.dataset.pc][1]);
+  $("ppColors").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  onEdit();
+});
+$("ppDel").addEventListener("click", () => {
+  if (!pinEl) return;
+  const span = pinEl; closePin();
+  span.replaceWith(...span.childNodes);
+  onEdit();
+});
+$("ppClose").addEventListener("click", closePin);
+$("pinPop").addEventListener("keydown", e => { if (e.key === "Escape") { e.stopPropagation(); e.preventDefault(); closePin(); } });
+addEventListener("resize", () => pinEl && placePin());
+addEventListener("scroll", () => pinEl && placePin(), true);
 
 /* ---------- geral ---------- */
 let toastT;

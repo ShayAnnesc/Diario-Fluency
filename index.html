@@ -6,8 +6,8 @@
   <title>Diário do Inglês</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&family=Bagel+Fat+One&family=Gamja+Flower&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Patrick+Hand&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Zen+Maru+Gothic&display=swap">
+  <link rel="stylesheet" href="css/styles.css?v=9">
   <style>html, body { height: 100%; margin: 0 } [hidden] { display: none !important }</style>
   <!-- Aplica o tema escolhido antes de desenhar a página (sem escolha, segue o sistema) -->
   <script>try { const t = JSON.parse(localStorage.getItem("diario-ingles-v1:theme")); if (t === "dark" || t === "light") document.documentElement.dataset.theme = t; } catch (e) {}</script>
@@ -150,33 +150,86 @@
         </div>
         <button type="button" class="btn" id="nmClose" title="Fechar a edição (Esc)">Concluir</button>
       </header>
+
       <div class="tool" role="toolbar" aria-label="Formatação">
-        <button type="button" data-cmd="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
-        <button type="button" data-cmd="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
-        <button type="button" data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
-        <button type="button" data-cmd="mark" title="Marca-texto">Marca-texto</button>
+        <button type="button" class="tb" id="tbGuide" aria-pressed="true" title="Mostrar ou ocultar o guia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M8 12h12M12 18h8"/></svg><span>Guia</span></button>
         <span class="sep"></span>
-        <button type="button" data-cmd="h3" title="Título">Título</button>
-        <button type="button" data-cmd="p" title="Texto normal">Texto</button>
-        <button type="button" data-cmd="quote" title="Destaque">Destaque</button>
+        <select id="tbBlock" aria-label="Estilo do parágrafo">
+          <option value="p">Texto normal</option>
+          <option value="h1">Título 1</option>
+          <option value="h2">Título 2</option>
+          <option value="h3">Título 3</option>
+        </select>
+        <select id="tbFont" aria-label="Fonte">
+          <option value="Urbanist" style="font-family:Urbanist">Urbanist</option>
+          <option value="Lato" style="font-family:Lato">Lato</option>
+          <option value="Poppins" style="font-family:Poppins">Poppins</option>
+          <option value="Raleway" style="font-family:Raleway">Raleway</option>
+          <option value="Zen Maru Gothic" style="font-family:'Zen Maru Gothic'">Zen Maru Gothic</option>
+          <option value="Patrick Hand" style="font-family:'Patrick Hand'">Patrick Hand</option>
+          <option value="Gamja Flower" style="font-family:'Gamja Flower'">Gamja Flower</option>
+          <option value="Bagel Fat One" style="font-family:'Bagel Fat One'">Bagel Fat One</option>
+        </select>
+        <span class="sizebox">
+          <button type="button" data-size="-1" aria-label="Diminuir o tamanho">−</button>
+          <input id="tbSize" type="number" min="8" max="72" value="16" aria-label="Tamanho da fonte">
+          <button type="button" data-size="1" aria-label="Aumentar o tamanho">+</button>
+        </span>
         <span class="sep"></span>
-        <button type="button" data-cmd="insertUnorderedList" title="Lista">• Lista</button>
-        <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
+        <button type="button" class="tb" data-cmd="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
+        <button type="button" class="tb" data-cmd="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
+        <button type="button" class="tb" data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+        <button type="button" class="tb" data-cmd="strikeThrough" title="Tachado"><s>S</s></button>
         <span class="sep"></span>
-        <button type="button" data-cmd="removeFormat" title="Limpar formatação">Limpar</button>
+        <span class="pal-wrap">
+          <button type="button" class="tb" data-pal="palFore" title="Cor do texto" aria-haspopup="true"><span class="glyph">A</span><i class="bar" id="foreBar"></i></button>
+          <span class="palette" id="palFore" role="menu" aria-label="Cor do texto" hidden></span>
+        </span>
+        <span class="pal-wrap">
+          <button type="button" class="tb" data-pal="palHilite" title="Cor do marca-texto" aria-haspopup="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg><i class="bar" id="hiliteBar"></i></button>
+          <span class="palette" id="palHilite" role="menu" aria-label="Cor do marca-texto" hidden></span>
+        </span>
+        <span class="sep"></span>
+        <button type="button" class="tb" data-cmd="insertUnorderedList" title="Lista">• Lista</button>
+        <button type="button" class="tb" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
+        <button type="button" class="tb" data-cmd="quote" title="Destaque">Destaque</button>
+        <span class="sep"></span>
+        <button type="button" class="tb pinbtn" data-cmd="pin" title="Prender um post-it no trecho selecionado">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-5h5"/></svg><span>Post-it</span></button>
+        <button type="button" class="tb" data-cmd="removeFormat" title="Limpar formatação">Limpar</button>
       </div>
-      <div class="editor prose" id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="nmTitle"
-        data-ph="Escreva o que aprendeu nesta unidade: regras de gramática, frases úteis, vocabulário novo, dúvidas para revisar…"></div>
+
+      <div class="nm-body" id="nmBody">
+        <aside class="guide" aria-label="Guia da anotação">
+          <div class="eyebrow">Guia</div>
+          <ol id="nmGuideList"></ol>
+        </aside>
+        <div class="editor prose" id="editor" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-labelledby="nmTitle"
+          data-ph="Escreva o que aprendeu nesta unidade: regras de gramática, frases úteis, vocabulário novo, dúvidas para revisar…"></div>
+      </div>
       <footer class="nmeta"><span id="nmWords"></span><span id="nmSaved"></span></footer>
     </div>
+  </div>
+
+  <!-- Post-it: abre ao clicar num trecho marcado (editável no editor, só leitura no card) -->
+  <div class="pinpop" id="pinPop" role="dialog" aria-label="Post-it" hidden>
+    <div class="pp-head">
+      <span class="pp-colors" id="ppColors"></span>
+      <button type="button" class="pp-x" id="ppClose" aria-label="Fechar o post-it">×</button>
+    </div>
+    <textarea id="ppText" spellcheck="false" aria-label="Texto do post-it" placeholder="Escreva sua nota…"></textarea>
+    <div class="pp-read" id="ppRead"></div>
+    <button type="button" class="pp-del" id="ppDel">Remover post-it</button>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="js/config.js?v=7"></script>
-  <script src="js/data.js?v=7"></script>
-  <script src="js/store.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/config.js?v=9"></script>
+  <script src="js/data.js?v=9"></script>
+  <script src="js/store.js?v=9"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>

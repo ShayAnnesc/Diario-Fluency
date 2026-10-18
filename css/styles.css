@@ -299,6 +299,82 @@ body.modal-open { overflow: hidden }
 .settings input:focus, .settings select:focus, .auth input:focus { outline: none; border-color: var(--accent); background: var(--accent-soft) }
 .days button { border-radius: 999px }
 
+/* ===== editor de anotações ===== */
+.nm-panel { width: min(1180px, 100%) }
+.nm-panel .tool { align-items: center; border-bottom: 1px solid var(--line); border-radius: 18px; padding: 6px 8px; gap: 4px }
+.nm-panel .tool .tb { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 6px 9px; border-radius: 10px; font-size: 13px; font-weight: 600; min-width: 32px; justify-content: center; color: var(--ink) }
+.nm-panel .tool .tb:hover { background: var(--surface) }
+.nm-panel .tool .tb[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent) }
+.nm-panel .tool select { font: inherit; font-size: 13px; font-weight: 500; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 160px }
+.nm-panel .tool select:hover { border-color: var(--accent) }
+.sizebox { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; background: var(--surface) }
+.sizebox button { width: 28px; height: 30px; border: 0; background: transparent; font-size: 16px; color: var(--ink); border-radius: 999px }
+.sizebox button:hover { color: var(--accent) }
+.sizebox input { width: 36px; border: 0; background: transparent; text-align: center; font: inherit; font-size: 13px; color: var(--ink); -moz-appearance: textfield }
+.sizebox input::-webkit-outer-spin-button, .sizebox input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
+.tb .glyph { font-weight: 700; font-size: 14px; line-height: 1 }
+.tb .bar { position: absolute; left: 50%; bottom: 3px; width: 16px; height: 3px; margin-left: -8px; border-radius: 2px; background: var(--ink) }
+.tb .bar#hiliteBar { background: rgba(242, 183, 5, .7) }
+.pal-wrap { position: relative; display: inline-flex }
+.pal-wrap .tb { position: relative; padding-bottom: 9px }
+.palette { position: absolute; top: calc(100% + 6px); left: 0; z-index: 5; display: grid; grid-template-columns: repeat(5, 26px); gap: 8px; padding: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 24px rgba(0, 0, 0, .18) }
+.palette[hidden] { display: none }
+.sw { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); padding: 0; background: var(--surface) }
+.sw:hover { transform: scale(1.12) }
+.sw.none { background: linear-gradient(135deg, transparent 44%, var(--miss) 44% 56%, transparent 56%), var(--surface) }
+.pinbtn { color: var(--accent) !important }
+
+.nm-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; min-height: 0 }
+.nm-body.noguide { grid-template-columns: minmax(0, 1fr) }
+.nm-body.noguide .guide { display: none }
+.guide { min-height: 0; overflow-y: auto; padding: 12px 6px 12px 4px; border-right: 1px solid var(--line) }
+.guide ol, .vguide ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px }
+.guide button, .vguide button { width: 100%; text-align: left; border: 0; background: none; padding: 6px 10px; border-radius: 10px; font-size: 13.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.guide button:hover, .vguide button:hover { background: var(--sunken); color: var(--accent) }
+.guide .lv1 button, .vguide .lv1 button { color: var(--ink); font-weight: 600 }
+.guide .lv2, .vguide .lv2 { padding-left: 12px }
+.guide .lv3, .vguide .lv3 { padding-left: 24px }
+.guide .empty { font-size: 12.5px; color: var(--muted); padding: 6px 10px; line-height: 1.4 }
+.nm-panel .editor { border-radius: 18px; padding: 18px 22px }
+.vguide { border: 1px solid var(--line); border-radius: 16px; padding: 8px 10px; background: var(--sunken) }
+.vguide summary { cursor: pointer; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+.vguide ol { max-height: 180px; overflow-y: auto }
+@media (max-width: 760px) {
+  .nm-body:not(.noguide) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) }
+  .guide { max-height: 26vh; border-right: 0; border-bottom: 1px solid var(--line) }
+  .nm-panel .tool { overflow-x: auto; flex-wrap: nowrap }
+  .palette { position: fixed; top: auto; left: 16px }
+}
+
+/* títulos e texto das anotações */
+.prose h1 { font-size: 26px; margin: 18px 0 6px }
+.prose h2 { font-size: 21px; margin: 16px 0 4px }
+.prose > :first-child { margin-top: 0 }
+
+/* post-its: o trecho fica marcado; o bilhete aparece ao clicar */
+.pin { --pin: #D9A400; --pin-bg: rgba(255, 214, 0, .22); background: var(--pin-bg); border-bottom: 2px solid var(--pin); border-radius: 3px; padding: 0 1px; cursor: pointer }
+.pin::after { content: ""; display: inline-block; width: 9px; height: 9px; margin-left: 4px; border-radius: 50%; background: var(--pin); vertical-align: .35em; box-shadow: 0 0 0 2px var(--surface) }
+.pin[data-color="pink"] { --pin: #D9539A; --pin-bg: rgba(217, 83, 154, .2) }
+.pin[data-color="green"] { --pin: #36A35F; --pin-bg: rgba(54, 163, 95, .2) }
+.pin[data-color="blue"] { --pin: #4A7FE0; --pin-bg: rgba(74, 127, 224, .2) }
+.pin[data-color="purple"] { --pin: #9466D8; --pin-bg: rgba(148, 102, 216, .22) }
+.pinpop { position: fixed; z-index: 70; width: 250px; min-height: 220px; display: grid; grid-template-rows: auto 1fr auto; gap: 6px; padding: 12px 14px 14px;
+  background: var(--pp-bg, #FFE58A); color: #2A2420; border-radius: 3px 3px 3px 3px; transform: rotate(-1.2deg);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .2); font-family: "Patrick Hand", var(--f-body) }
+.pinpop[hidden] { display: none }
+.pinpop::after { content: ""; position: absolute; right: 0; bottom: 0; width: 22px; height: 22px; background: linear-gradient(315deg, var(--bg) 50%, rgba(0, 0, 0, .14) 50%) }
+.pp-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 20px }
+.pp-colors { display: flex; gap: 6px }
+.pp-colors[hidden] { display: none }
+.pp-colors button { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(0, 0, 0, .3); padding: 0 }
+.pp-colors button[aria-pressed="true"] { outline: 2px solid #2A2420; outline-offset: 1px }
+.pp-x { border: 0; background: none; color: inherit; font-size: 22px; line-height: 1; padding: 0 2px; margin-left: auto }
+.pinpop textarea { resize: none; border: 0; background: transparent; color: inherit; font: inherit; font-size: 19px; line-height: 1.3; outline: none; min-height: 140px }
+.pinpop textarea::placeholder { color: rgba(42, 36, 32, .5) }
+.pp-read { font-size: 19px; line-height: 1.3; white-space: pre-wrap; overflow-wrap: anywhere }
+.pp-del { justify-self: start; border: 0; background: none; padding: 0; font: 600 13px var(--f-body); color: #8A2E2E; text-decoration: underline; text-underline-offset: 3px }
+@media (prefers-reduced-motion: reduce) { .pinpop { transform: none } }
+
 /* alternância claro/escuro */
 .top-right { display: grid; justify-items: end; gap: 10px }
 .theme-switch { position: relative; display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; border: 1px solid var(--line); background: var(--sunken) }
